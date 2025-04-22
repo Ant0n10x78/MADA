@@ -1,11 +1,11 @@
 FROM jenkins/jenkins:lts
 
-# Pré-installation des plugins via script (facultatif mais pratique)
+USER root
+RUN apt-get update && apt-get install -y git curl unzip && rm -rf /var/lib/apt/lists/*
+USER jenkins
+
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 
-# (Optionnel) Copier un fichier de config LDAP ou init groovy
-#COPY init.groovy.d/ /usr/share/jenkins/ref/init.groovy.d/
-
-# Exposition du port Jenkins
-EXPOSE 8080
+COPY init.groovy.d/ /usr/share/jenkins/ref/init.groovy.d/
+COPY jobs/ /usr/share/jenkins/ref/jobs/
