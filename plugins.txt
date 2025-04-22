@@ -1,0 +1,5 @@
+ldap
+git
+workflow-aggregator
+blueocean
+credentials
