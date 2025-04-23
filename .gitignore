@@ -1,0 +1,41 @@
+# ------------------------------
+# 1. Secrets et variables d’environnement
+# ------------------------------
+.env*                 # .env, .env.dev, .env.local…
+secrets/              # dossiers où tu montes des mots de passe ou clés
+*.pem
+*.key
+
+# ------------------------------
+# 2. Fichiers de configuration générés par OpenLDAP
+#    (si tu montes ces volumes dans ton dépôt)
+# ------------------------------
+ldap-data/            # /var/lib/ldap    ↳ base de données (*.mdb, *.db, *.db-journal…)
+ldap-config/          # /etc/ldap/slapd.d ↳ fichiers slapd.d/*.ldif
+*.ldif.backup         # exports ponctuels
+
+# ------------------------------
+# 3. Logs et artefacts runtime
+# ------------------------------
+logs/
+*.log
+*.pid
+*.sock
+
+# ------------------------------
+# 4. Fichiers temporaires / cache
+# ------------------------------
+tmp/
+cache/
+*.swp
+*.tmp
+
+# ------------------------------
+# 5. Overrides et fichiers locaux propres à chaque poste
+# ------------------------------
+docker-compose.override.yml
+docker-compose.*.yml  # ex. docker-compose.dev.yml
+.idea/                # JetBrains, VS Code, etc.
+.vscode/
+.DS_Store
+
