@@ -3,22 +3,29 @@ services:
     image: osixia/openldap:1.5.0
     container_name: openldap
     environment:
-      LDAP_TLS: true
       LDAP_ORGANISATION: "MADAClient"
       LDAP_DOMAIN: "MADA.local"
       LDAP_ADMIN_PASSWORD: "temp"
     ports:
       - "389:389"
       - "636:636"
+    #volumes:
+      #- ./ldap_data:/var/lib/ldap # BDD de LDAP, permet de garder les données en cas d'arrêt du conteneur
+      #- ./ldap_config:/etc/ldap/slapd.d # Config du LDAP
 
-  phpldapadmin:
-    image: osixia/phpldapadmin:0.9.0
-    container_name: phpldapadmin
+  ldapaccountmanager:
+    image: ghcr.io/ldapaccountmanager/lam:9.1
+    #build: ./OpenLDAP
+    container_name: ldapaccountmanager
     environment:
-      PHPLDAPADMIN_LDAP_HOSTS: openldap
-      PHPLDAPADMIN_HTTPS: "false"
-      PHPLDAPADMIN_ALLOW_INSECURE_ACCESS: "true"
-    ports:
-      - "8080:80"
+      LAM_PASSWORD: "temp"
+      LAM_LANG: "fr_FR"
+      LDAP_USER: "cn=admin,dc=MADA,dc=local"
+      LDAP_BASE_DN: "dc=MADA,dc=local"
+      LDAP_SERVER: "ldap://openldap:389"
     depends_on:
       - openldap
+    ports:
+      - "8080:80"
+    #volumes:
+     #- ./lam_config:/var/lib/ldap-account-manager/config
