@@ -10,8 +10,8 @@ secrets/              # dossiers où tu montes des mots de passe ou clés
 # 2. Fichiers de configuration générés par OpenLDAP
 #    (si tu montes ces volumes dans ton dépôt)
 # ------------------------------
-ldap-data/            # /var/lib/ldap    ↳ base de données (*.mdb, *.db, *.db-journal…)
-ldap-config/          # /etc/ldap/slapd.d ↳ fichiers slapd.d/*.ldif
+ldap*data/            # /var/lib/ldap    ↳ base de données (*.mdb, *.db, *.db-journal…)
+ldap*config/          # /etc/ldap/slapd.d ↳ fichiers slapd.d/*.ldif
 *.ldif.backup         # exports ponctuels
 
 # ------------------------------
