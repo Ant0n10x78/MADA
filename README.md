@@ -1,6 +1,14 @@
 # MADA
 
-## Define root password on gitlab
+## Introduction
+
+L'objectif du projet est de fournir une plateforme de développement sécurisée pour des équipes distantes.
+
+
+## WARNING - Mise en production
+
+Avant toute mise en production il est nécessaire de modifier les mots de passe par défaut.
+
 
 Se connecter en cli sur le conteneur
 ```

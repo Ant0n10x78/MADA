@@ -1,0 +1,130 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1520.v56d65e3b_4566">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Pipeline de l&apos;application test myapp</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4106.v7a_8a_8176d450">
+    <script>pipeline {
+    agent any
+
+    stages {
+        stage(&apos;Test location&apos;) {
+            steps {
+                echo &apos;location&apos;
+                sh &apos;pwd&apos;
+            }
+        }
+
+        stage(&apos;Téléchargement du repo&apos;) {
+            steps {
+                echo &apos;Téléchargement du repo&apos;
+                sh &apos;&apos;&apos;
+                    if [ -d &quot;app&quot; ]; then
+                        echo &quot;Le dossier app existe déjà, suppression...&quot;
+                        rm -rf app
+                    fi
+                    git clone http://gitlab:8929/root/app
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Audit Dockerfile - Hadolint&apos;) {
+            steps {
+                echo &apos;Audit du Dockerfile avec Hadolint&apos;
+                sh &apos;&apos;&apos;
+                    if [ -f app/Dockerfile ]; then
+                        hadolint app/Dockerfile || { echo &quot;Des problèmes ont été détectés dans le Dockerfile&quot;; exit 1; } 
+                        echo &quot;✅ Dockerfile conforme selon Hadolint.&quot;
+                    else
+                        echo &quot;Aucun Dockerfile trouvé dans app/&quot;
+                        exit 1
+                    fi
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Build&apos;) {
+            steps {
+                echo &apos;Build de l’image Docker de l’app&apos;
+                sh &apos;docker build -t myapp:latest ./app&apos;
+            }
+        }
+
+        stage(&apos;Test&apos;) {
+            steps {
+                echo &apos;Tests de l’application&apos;
+                sh &apos;docker run --rm myapp:latest npm test&apos;
+            }
+        }
+
+        stage(&apos;Audit de sécurité - npm audit&apos;) {
+            steps {
+                echo &apos;Audit de sécurité des dépendances Node.js&apos;
+                sh &apos;&apos;&apos;
+                    cd app
+                    npm install
+                    npm audit --audit-level=high
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Audit de code - ESLint&apos;) {
+            steps {
+                echo &apos;🔍 Audit du code source avec ESLint&apos;
+                sh &apos;&apos;&apos;
+                    cd app
+
+                    if [ ! -f .eslintrc.json ]; then
+                        echo &quot;⚠️  Aucun fichier .eslintrc.json trouvé. Initialisation automatique...&quot;
+                        npx eslint --init || true
+                    fi
+
+                    echo &quot;🧪 Lancement de l’analyse ESLint...&quot;
+                    eslint . || { echo &quot;❌ ESLint a détecté des problèmes.&quot;; exit 1; }
+
+                    echo &quot;✅ Audit ESLint terminé sans erreur.&quot;
+                &apos;&apos;&apos;
+            }
+        }
+
+        stage(&apos;Vérification manuelle avant déploiement&apos;) {
+            steps {
+                script {
+                    def proceed = input(
+                        id: &apos;Approval&apos;, message: &apos;Déployer en production ?&apos;, parameters: [
+                            [$class: &apos;BooleanParameterDefinition&apos;, defaultValue: false, description: &apos;Valider le déploiement&apos;, name: &apos;Approuver&apos;]
+                        ]
+                    )
+                    if (!proceed) {
+                        error(&quot;Déploiement annulé.&quot;)
+                    }
+                }
+            }
+        }
+
+        stage(&apos;Deploy to Prod&apos;) {
+            steps {
+                echo &apos;Déploiement de l’image Docker&apos;
+                sh &apos;&apos;&apos;
+                    docker stop myapp || true
+                    docker rm myapp || true
+                    docker run -d -p 3000:3000 --name myapp myapp:latest
+                &apos;&apos;&apos;
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
