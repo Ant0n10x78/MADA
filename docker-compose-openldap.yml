@@ -1,0 +1,64 @@
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "MADAClient"
+      LDAP_DOMAIN: "MADA.local"
+      LDAP_ADMIN_PASSWORD: "temp"
+    ports:
+      - "389:389"
+      - "636:636"
+    networks: [projetOpenSource]
+    volumes:
+      - ./ldap_data:/var/lib/ldap # BDD de LDAP, permet de garder les données en cas d'arrêt du conteneur
+      - ./ldap_config:/etc/ldap/slapd.d # Config du LDAP
+
+  ldapaccountmanager:
+    image: ghcr.io/ldapaccountmanager/lam:9.1
+    container_name: ldapaccountmanager
+    environment:
+      LAM_PASSWORD: "temp"
+      LAM_LANG: "fr_FR"
+      LDAP_USER: "cn=admin,dc=MADA,dc=local"
+      LDAP_BASE_DN: "dc=MADA,dc=local"
+      LDAP_SERVER: "ldap://openldap:389"
+    depends_on:
+      - openldap
+    ports:
+      - "8080:80"
+    networks: [projetOpenSource]
+
+  openvpn:
+    image: wheelybird/openvpn-ldap-otp:v1.8
+    container_name: openvpn
+    cap_add: [NET_ADMIN]
+    environment:
+      USE_CLIENT_CERTIFICATE: false
+      # --- Paramètres VPN ---
+      OVPN_SERVER_CN: "192.168.154.132"
+      OVPN_PROTOCOL: "udp"
+      OVPN_ROUTES: "192.168.10.0 24"
+      OVPN_ENABLE_COMPRESSION: false
+      # --- Paramètres LDAP ---
+      LDAP_URI: "ldap://openldap"
+      LDAP_BASE_DN: "ou=users,dc=MADA,dc=local"
+      LDAP_BIND_USER_DN: "cn=admin,dc=MADA,dc=local"
+      LDAP_BIND_USER_PASS: "temp"
+      LDAP_FILTER: "" # doit être vide (marche pas sinon, chépa pourquoi)
+      # --- Filtrage par groupe --- # non fonctionnel pour le moment
+      LDAP_REQUIRE_GROUP: "cn=vpnusers,ou=groups,dc=MADA,dc=local"
+      LDAP_GROUP_MEMBER_ATTRIBUTE: "memberUid"
+      LDAP_GROUP_MEMBER_FORMAT: "%u"
+      LDAP_GROUP_BASE_DN: "ou=groups,dc=MADA,dc=local"
+
+      LDAP_TLS: false # à changer dès que possible
+    ports:
+      - "1194:1194/udp"
+    networks: [projetOpenSource]
+    volumes:
+      - ./openvpn:/etc/openvpn # certificats & fichiers de conf
+
+networks:
+  projetOpenSource:
+    external: true
